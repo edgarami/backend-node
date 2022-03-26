@@ -1,6 +1,8 @@
 const User = require('../models/user.model')
 const bcryptjs = require('bcryptjs')
 const bcrypt = require('bcryptjs/dist/bcrypt')
+
+//obtener usuario
 const getUser = async (req, res) => {
 
     const user = await User.find({}, 'nombre email role ')
@@ -8,6 +10,7 @@ const getUser = async (req, res) => {
     res.json({user })
 }
 
+//crear usuario
 const createUser = async(req, res) => {
 
     const {email, password, name} = req.body;
@@ -44,7 +47,88 @@ const createUser = async(req, res) => {
    
 }
 
+//actualizar campos del usuario
+const updatedUser = async (req, res) => {
+
+    const uid = req.params.id
+
+    try {
+
+        const userDB = await User.findById( uid )
+
+        if( !userDB ){
+            return res.status(400).json({
+                msg: 'No existe un usuario por ese id'
+            });
+        }
+
+        //Actualizaciones
+
+        const campos = req.body;
+        
+        if( userDB.email === req.body.email ){
+            delete campos.email;
+        }else{
+            const emailExist = await User.findOne({ email: req.body.email })
+
+            if( emailExist ){
+                return res.status(400).json({
+                    msg: 'Ya existe un usuario con este mail'
+                });
+            }
+        }
+
+
+        delete campos.password;
+
+        const userUpdated = await User.findByIdAndUpdate( uid, campos, {new: true} );
+
+        res.json({
+            user: userUpdated
+        });
+
+        
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            msg:'error inesperado'
+        })
+    }
+}
+
+//borrar usuario
+const deleteUser = async (req, res) =>{
+
+    const uid = req.params.id;
+    try {
+        const userDB = await User.findById( uid )
+
+        if( !userDB ){
+            return res.status(400).json({
+                msg: 'No existe un usuario por ese id'
+            });
+        }
+
+        //eliminar usuario directamente de la base de datos
+        await User.findByIdAndDelete( uid );
+
+        res.json({
+            msg:' usuario eliminado '
+        })
+    } catch (error) {
+
+        console.log(error)
+        res.status(500).json({
+            msg:'error inesperado'
+        })
+    };
+
+}
+
+
 module.exports = {
     getUser,
-    createUser
+    createUser,
+    updatedUser,
+    deleteUser
 }
