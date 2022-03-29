@@ -1,13 +1,14 @@
 const User = require('../models/user.model')
 const bcryptjs = require('bcryptjs')
 const bcrypt = require('bcryptjs/dist/bcrypt')
+const { generateJWT } = require('../helpers/jwt')
 
 //obtener usuario
 const getUser = async (req, res) => {
 
     const user = await User.find({}, 'nombre email role ')
 
-    res.json({user })
+    res.json({user, uid: req.uid })
 }
 
 //crear usuario
@@ -34,8 +35,12 @@ const createUser = async(req, res) => {
 
         //guardar usuario
         await user.save()
+
+        //generar el token jwt
+
+        const token = await generateJWT( User.id );
     
-        res.json({ user })
+        res.json({ user, token })
 
     } catch (error) {
         console.log(error)
